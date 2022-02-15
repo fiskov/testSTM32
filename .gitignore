@@ -1,0 +1,9 @@
+DSP/
+Templates/
+Examples/
+NN/
+build/
+*.log
+*.d
+.mxproject
+.vscode

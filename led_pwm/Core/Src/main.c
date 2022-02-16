@@ -33,7 +33,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define PWM_VALUE_MAX 1000
+#define PWM_DUTY_MAX 32
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -44,7 +44,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+static uint8_t pwm_duty = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -103,8 +103,21 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  int8_t pwm_duty_percent = 0, pwm_step = 1;
+
   while (1)
   {
+    LL_mDelay(10);
+
+    if (pwm_duty_percent <= 0) 
+      pwm_step = 1;
+    if (pwm_duty_percent >= 100) 
+      pwm_step = -1;
+
+    pwm_duty_percent += pwm_step;
+
+    pwm_duty = pwm_duty_percent * PWM_DUTY_MAX / 100;
+    
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -156,24 +169,16 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void TIM1_Callback(void)
 {
+  LL_TIM_ClearFlag_UPDATE(TIM1);
+
   //software pwm 
-	static uint16_t pwm_step = 1, pwm_value = 0, pwm_level = 1;
+	static uint8_t pwm_value = 0;
+	
+  pwm_value++;
+  if (pwm_value > PWM_DUTY_MAX) 
+    pwm_value = 0;
 
-	pwm_value++;
-	if (pwm_value > PWM_VALUE_MAX)
-	{
-		pwm_value = 0;
-
-		pwm_level += pwm_step;
-
-		if (pwm_level >= PWM_VALUE_MAX)
-			pwm_step = -1;
-
-		if (pwm_level <= 0)
-			pwm_step = +1;
-	}
-
-  if (pwm_value > pwm_level)
+  if (pwm_value > pwm_duty)
     LL_GPIO_SetOutputPin(LED_GPIO_Port, LED_Pin);
   else
     LL_GPIO_ResetOutputPin(LED_GPIO_Port, LED_Pin);

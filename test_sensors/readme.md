@@ -8,8 +8,8 @@ Software:
 Hardware:
 - MCU stm32f103c8t6
 - Display GMG12864_0.6D_v2.2
-- 3-axis magnitometer HMC5883L (i2c)
-- (-) 3-axis accelerometer ADXL345 (spi)
+- 3-axis magnitometer HMC5883L (i2c) (Auto calibration doesn't work)
+- 3-axis accelerometer ADXL345 (spi) (Only 8-bit mode)
 - (-) Clock DS3231 (i2c)
 - (-) GPS GY-NEO6MV2 (uart)
 - (-) Current CJMCU-226 (i2c)

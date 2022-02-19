@@ -64,7 +64,7 @@ void mag_HMC5883L_init(mag_drv_t * mag_drv)
   //Continuous-measurement mode
   bfr[0] = REG_MODE;   bfr[1] = 0;   mag_i2c_write(bfr, sizeof(bfr));  
 
-  mag_delay_ms(100);
+  mag_delay_ms(1);
 }
 
 void mag_HMC5883L_getXYZ(mag_point_t * point)

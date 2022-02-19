@@ -36,6 +36,7 @@
 #include "disp_draw.h"
 
 #include "mag_HMC5883L.h"
+#include "acc_ADXL345.h"
 #include "gps_decode.h"
 /* USER CODE END Includes */
 
@@ -70,7 +71,7 @@ void SystemClock_Config(void);
 
 static uint8_t disp_bfr[128*64/8] = {0};
 
-static void disp_write_spi_cb(uint8_t * bfr, uint16_t length) 
+static void disp_spi_write_cb(uint8_t * bfr, uint16_t length) 
 {
   HAL_GPIO_WritePin(DISP_CS_GPIO_Port, DISP_CS_Pin, GPIO_PIN_RESET);
   HAL_SPI_Transmit(&hspi1, bfr, length, 1000);
@@ -93,11 +94,24 @@ static void i2c_1_read_cb(uint8_t addr, uint8_t bfr[], uint16_t length)
   HAL_I2C_Master_Receive(&hi2c1, addr << 1, bfr, length, 100);
 }
 
+static void acc_spi_write_cb(uint8_t * bfr, uint16_t length) 
+{
+  HAL_GPIO_WritePin(ACC_CS_GPIO_Port, ACC_CS_Pin, GPIO_PIN_RESET);
+  HAL_SPI_Transmit(&hspi2, bfr, length, 10);
+  HAL_GPIO_WritePin(ACC_CS_GPIO_Port, ACC_CS_Pin, GPIO_PIN_SET);
+}
+static void acc_spi_write_read_cb(uint8_t * bfr_tx, uint8_t * bfr_rx, uint16_t length) 
+{
+  HAL_GPIO_WritePin(ACC_CS_GPIO_Port, ACC_CS_Pin, GPIO_PIN_RESET);
+  HAL_SPI_TransmitReceive(&hspi2, bfr_tx, bfr_rx, length, 10);
+  HAL_GPIO_WritePin(ACC_CS_GPIO_Port, ACC_CS_Pin, GPIO_PIN_SET);
+}
+
 typedef struct {
   int16_t x, y, z, t;
 } point_t;
 
-static point_t acc;
+static acc_point_t acc;
 static mag_point_t mag;
 static struct tm clock_value;
 static gpsValue_t gps_value;
@@ -112,7 +126,8 @@ static void update_disp_bfr(uint8_t * bfr)
   sprintf(str, "%6d %6d %6d ", mag.x, mag.y, mag.z);
   disp_draw_str_simple(disp_bfr, str, STR_LEN, 0, 1);
 
-  disp_draw_str_simple(disp_bfr, "acc ADXL345", 11, 0, 2);
+  sprintf(str, "acc ADXL345 id=%02X", acc.t);
+  disp_draw_str_simple(disp_bfr, str, strlen(str), 0, 2);  
   sprintf(str, "%6d %6d %6d ", acc.x, acc.y, acc.z);
   disp_draw_str_simple(disp_bfr, str, STR_LEN, 0, 3);
 
@@ -169,10 +184,10 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim1);
   
-
+  //disp
   static display_gmg12864_t disp_drv = {
     .delay_ms_cb = HAL_Delay,
-    .write_spi_cb = disp_write_spi_cb,
+    .write_spi_cb = disp_spi_write_cb,
     .set_display_pin_cb = disp_set_pin_cb,
     .bfr = disp_bfr,
     .bfr_size = sizeof(disp_bfr)
@@ -180,6 +195,7 @@ int main(void)
 
   display_gmg12864_init(&disp_drv);
 
+  //mag
   static mag_drv_t mag_drv;
   mag_HMC5883L_default(&mag_drv);
 
@@ -189,14 +205,27 @@ int main(void)
 
   mag_HMC5883L_init(&mag_drv);
   //mag_HMC5883L_compenstation(&mag);
+
+  //acc
+  HAL_Delay(5);
+  static acc_drv_t acc_drv = {
+    .datarate = ACC_DATARATE_6_25,
+    .spi_write_cb = acc_spi_write_cb,
+    .spi_write_read_cb = acc_spi_write_read_cb,
+    .delay_ms_cb = HAL_Delay
+  };
+  acc_ADXL345_init(&acc_drv);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    HAL_Delay(300);
-    mag_HMC5883L_getXYZ(&mag);
+    HAL_Delay(200);
+    mag_HMC5883L_getXYZ(&mag);    
+    acc_ADXL345_getXYZ(&acc);
+    acc.t = acc_ADXL345_getID();
     
     update_disp_bfr(disp_bfr);
     display_gmg12864_print();    
@@ -254,7 +283,12 @@ void tmr1_interrupt(void)
     tmr1000 = 1000;   
     
     clock_value.tm_sec++;
-    clock_value.tm_sec %= 60;
+    if (clock_value.tm_sec == 60) 
+    {
+      clock_value.tm_sec = 0;
+      clock_value.tm_min++;
+    }
+    
   }
 }
 /* USER CODE END 4 */

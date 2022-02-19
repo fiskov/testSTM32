@@ -37,6 +37,7 @@
 
 #include "mag_HMC5883L.h"
 #include "acc_ADXL345.h"
+#include "clock_DS3231.h"
 #include "gps_decode.h"
 /* USER CODE END Includes */
 
@@ -113,20 +114,20 @@ typedef struct {
 
 static acc_point_t acc;
 static mag_point_t mag;
-static struct tm clock_value;
+static clock_value_t clock_value;
 static gpsValue_t gps_value;
 static uint16_t current_value;
 
 #define STR_LEN (128/6)
 static void update_disp_bfr(uint8_t * bfr)
 { 
-  char str[STR_LEN+1] = {0};
+  char str[STR_LEN+6] = {0};
   
   disp_draw_str_simple(disp_bfr, "mag HMC5883L", 12, 0, 0);
   sprintf(str, "%6d %6d %6d ", mag.x, mag.y, mag.z);
   disp_draw_str_simple(disp_bfr, str, STR_LEN, 0, 1);
 
-  sprintf(str, "acc ADXL345 id=%02X", acc.t);
+  sprintf(str, "acc ADXL345    t=%u", clock_value.temperature);
   disp_draw_str_simple(disp_bfr, str, strlen(str), 0, 2);  
   sprintf(str, "%6d %6d %6d ", acc.x, acc.y, acc.z);
   disp_draw_str_simple(disp_bfr, str, STR_LEN, 0, 3);
@@ -143,7 +144,7 @@ static void update_disp_bfr(uint8_t * bfr)
   disp_draw_str_simple(disp_bfr, str, STR_LEN, 0, 6);
 
         fractional = modf(gps_value.lng, &integral)*10000;
-  sprintf(str, "        long%4d.%04d", (int16_t)integral, (int16_t)(fractional));
+  sprintf(str, " %3s    long%4d.%04d", (gps_value.ok ? "Ok " : "Err"), (int16_t)integral, (int16_t)(fractional));
   disp_draw_str_simple(disp_bfr, str, STR_LEN, 0, 7);  
 }
 /* USER CODE END 0 */
@@ -216,19 +217,43 @@ int main(void)
   };
   acc_ADXL345_init(&acc_drv);
 
+  //clock
+  static clock_drv_t clock_drv = {
+    .addr = 0x68,
+    .read_i2c_cb = i2c_1_read_cb,
+    .write_i2c_cb = i2c_1_write_cb
+  };
+  clock_DS3231_init(&clock_drv);
+
+  clock_value.tm_hour = 23;
+  clock_value.tm_min = 34;
+  clock_value.tm_sec = 45;
+
+  clock_value.tm_wday = 6;
+  clock_value.tm_mday = 19;
+  clock_value.tm_mon = 02;
+  clock_value.tm_year = 2022;
+
+  //clock_DS3231_setTime(&clock_value);
+  
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    HAL_Delay(200);
-    mag_HMC5883L_getXYZ(&mag);    
-    acc_ADXL345_getXYZ(&acc);
-    acc.t = acc_ADXL345_getID();
+    HAL_Delay(400);
+    mag_HMC5883L_getXYZ(&mag);
+    acc_ADXL345_getXYZ(&acc);    
     
+    clock_DS3231_getTime(&clock_value);
+    acc.x = clock_value.tm_year;
+    acc.y = clock_value.tm_mon;
+    acc.z = clock_value.tm_mday;
+
     update_disp_bfr(disp_bfr);
-    display_gmg12864_print();    
+    display_gmg12864_print();
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -281,14 +306,7 @@ void tmr1_interrupt(void)
   if (--tmr1000 == 0)
   {
     tmr1000 = 1000;   
-    
-    clock_value.tm_sec++;
-    if (clock_value.tm_sec == 60) 
-    {
-      clock_value.tm_sec = 0;
-      clock_value.tm_min++;
-    }
-    
+        
   }
 }
 /* USER CODE END 4 */

@@ -64,6 +64,7 @@ Lib/display_draw/ascii_chars.c \
 Lib/display_draw/disp_draw.c \
 Lib/mag_HMC5883L/mag_HMC5883L.c \
 Lib/acc_ADXL345/acc_ADXL345.c \
+Lib/clock_DS3231/clock_DS3231.c \
 Lib/gps_NEO6M/gps_decode.c
 
 

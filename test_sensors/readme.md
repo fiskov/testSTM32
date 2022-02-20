@@ -11,8 +11,7 @@ Hardware:
 - 3-axis magnitometer HMC5883L (i2c) (Auto calibration doesn't work)
 - 3-axis accelerometer ADXL345 (spi) (Only 8-bit mode)
 - Clock DS3231 (i2c) (Only read and set, w/o alarm)
+- Current CJMCU-226 (i2c) (i2c doesn't write calibration!)
 - (-) GPS GY-NEO6MV2 (uart)
-- (-) Current CJMCU-226 (i2c)
-- (-) Humidity / Temperature Sensor Module HTU21D (i2c)
 
 ![img](img.jpg)

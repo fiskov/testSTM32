@@ -21,6 +21,7 @@
 #include "i2c.h"
 #include "spi.h"
 #include "tim.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -38,6 +39,7 @@
 #include "mag_HMC5883L.h"
 #include "acc_ADXL345.h"
 #include "clock_DS3231.h"
+#include "power_INA226.h"
 #include "gps_decode.h"
 /* USER CODE END Includes */
 
@@ -94,6 +96,14 @@ static void i2c_1_read_cb(uint8_t addr, uint8_t bfr[], uint16_t length)
 {
   HAL_I2C_Master_Receive(&hi2c1, addr << 1, bfr, length, 100);
 }
+static void i2c_2_write_cb(uint8_t addr, uint8_t bfr[], uint16_t length)
+{
+  HAL_I2C_Master_Transmit(&hi2c2, addr << 1, bfr, length, 100);
+}
+static void i2c_2_read_cb(uint8_t addr, uint8_t bfr[], uint16_t length)
+{
+  HAL_I2C_Master_Receive(&hi2c2, addr << 1, bfr, length, 100);
+}
 
 static void acc_spi_write_cb(uint8_t * bfr, uint16_t length) 
 {
@@ -112,34 +122,34 @@ typedef struct {
   int16_t x, y, z, t;
 } point_t;
 
-static acc_point_t acc;
-static mag_point_t mag;
-static clock_value_t clock_value;
-static gpsValue_t gps_value;
-static uint16_t current_value;
+static acc_point_t acc = {0};
+static mag_point_t mag = {0};
+static clock_value_t clock_value = {0};
+static gpsValue_t gps_value = {0};
+static power_value_t power_value = {0};
 
 #define STR_LEN (128/6)
 static void update_disp_bfr(uint8_t * bfr)
 { 
   char str[STR_LEN+6] = {0};
-  
+  double integral, fractional;
+
   disp_draw_str_simple(disp_bfr, "mag HMC5883L", 12, 0, 0);
   sprintf(str, "%6d %6d %6d ", mag.x, mag.y, mag.z);
   disp_draw_str_simple(disp_bfr, str, STR_LEN, 0, 1);
 
-  sprintf(str, "acc ADXL345    t=%u", clock_value.temperature);
-  disp_draw_str_simple(disp_bfr, str, strlen(str), 0, 2);  
+  disp_draw_str_simple(disp_bfr, "acc ADXL345", 11, 0, 2);  
   sprintf(str, "%6d %6d %6d ", acc.x, acc.y, acc.z);
   disp_draw_str_simple(disp_bfr, str, STR_LEN, 0, 3);
 
   sprintf(str, "Clock DS3231 %02d:%02d:%02d", clock_value.tm_hour , clock_value.tm_min, clock_value.tm_sec);
   disp_draw_str_simple(disp_bfr, str, STR_LEN, 0, 4);
   
-  sprintf(str, "Current INA226 %5d", current_value);
+  fractional = modf(power_value.current_mA, &integral)*10;
+  sprintf(str, "Cur. INA226, mA %3d.%d", (int16_t)integral, (uint8_t)(fractional));
   disp_draw_str_simple(disp_bfr, str, STR_LEN, 0, 5);  
 
-  double integral;
-  double fractional = modf(gps_value.lat, &integral)*10000;
+  fractional = modf(gps_value.lat, &integral)*10000;
   sprintf(str, "GPS NEO6 lat%4d.%04d",(int16_t)integral, (int16_t)(fractional));
   disp_draw_str_simple(disp_bfr, str, STR_LEN, 0, 6);
 
@@ -182,6 +192,7 @@ int main(void)
   MX_I2C1_Init();
   MX_I2C2_Init();
   MX_SPI2_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim1);
   
@@ -236,6 +247,17 @@ int main(void)
 
   //clock_DS3231_setTime(&clock_value);
   
+  //power shunt
+  static power_drv_t power_drv = {
+    .addr = 0x40,
+    .r_shunt = 0.1,
+    .avg = POWER_AVG_1,
+    .conv_time = POWER_TIME_1_ms,
+    .read_i2c_cb = i2c_2_read_cb,
+    .write_i2c_cb = i2c_2_write_cb,
+    .delay_ms_cb = HAL_Delay
+  };
+  power_INA226_init(&power_drv);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -245,11 +267,8 @@ int main(void)
     HAL_Delay(400);
     mag_HMC5883L_getXYZ(&mag);
     acc_ADXL345_getXYZ(&acc);    
-    
     clock_DS3231_getTime(&clock_value);
-    acc.x = clock_value.tm_year;
-    acc.y = clock_value.tm_mon;
-    acc.z = clock_value.tm_mday;
+    power_INA226_getValue(&power_value);
 
     update_disp_bfr(disp_bfr);
     display_gmg12864_print();

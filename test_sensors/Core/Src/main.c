@@ -38,7 +38,7 @@
 #include "mag_HMC5883L.h"
 #include "acc_ADXL345.h"
 #include "clock_DS3231.h"
-#include "gps_decode.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -86,13 +86,13 @@ static void disp_set_pin_cb(display_gmg12864_pins_t * pins)
   HAL_GPIO_WritePin(DISP_RS_GPIO_Port, DISP_RS_Pin, states[pins->pin_data_cmd] );
 }
 
-static void i2c_1_write_cb(uint8_t addr, uint8_t bfr[], uint16_t length)
+static void i2c_2_write_cb(uint8_t addr, uint8_t bfr[], uint16_t length)
 {
-  HAL_I2C_Master_Transmit(&hi2c1, addr << 1, bfr, length, 100);
+  HAL_I2C_Master_Transmit(&hi2c2, addr << 1, bfr, length, 100);
 }
-static void i2c_1_read_cb(uint8_t addr, uint8_t bfr[], uint16_t length)
+static void i2c_2_read_cb(uint8_t addr, uint8_t bfr[], uint16_t length)
 {
-  HAL_I2C_Master_Receive(&hi2c1, addr << 1, bfr, length, 100);
+  HAL_I2C_Master_Receive(&hi2c2, addr << 1, bfr, length, 100);
 }
 
 static void acc_spi_write_cb(uint8_t * bfr, uint16_t length) 
@@ -115,8 +115,6 @@ typedef struct {
 static acc_point_t acc;
 static mag_point_t mag;
 static clock_value_t clock_value;
-static gpsValue_t gps_value;
-static uint16_t current_value;
 
 #define STR_LEN (128/6)
 static void update_disp_bfr(uint8_t * bfr)
@@ -127,25 +125,17 @@ static void update_disp_bfr(uint8_t * bfr)
   sprintf(str, "%6d %6d %6d ", mag.x, mag.y, mag.z);
   disp_draw_str_simple(disp_bfr, str, STR_LEN, 0, 1);
 
-  sprintf(str, "acc ADXL345    t=%u", clock_value.temperature);
-  disp_draw_str_simple(disp_bfr, str, strlen(str), 0, 2);  
+  sprintf(str, "acc ADXL345");
+  disp_draw_str_simple(disp_bfr, str, strlen(str), 0, 3);  
   sprintf(str, "%6d %6d %6d ", acc.x, acc.y, acc.z);
-  disp_draw_str_simple(disp_bfr, str, STR_LEN, 0, 3);
-
-  sprintf(str, "Clock DS3231 %02d:%02d:%02d", clock_value.tm_hour , clock_value.tm_min, clock_value.tm_sec);
   disp_draw_str_simple(disp_bfr, str, STR_LEN, 0, 4);
-  
-  sprintf(str, "Current INA226 %5d", current_value);
-  disp_draw_str_simple(disp_bfr, str, STR_LEN, 0, 5);  
 
-  double integral;
-  double fractional = modf(gps_value.lat, &integral)*10000;
-  sprintf(str, "GPS NEO6 lat%4d.%04d",(int16_t)integral, (int16_t)(fractional));
+  sprintf(str, "Clock DS3231 t=%3d'C", clock_value.temperature);
   disp_draw_str_simple(disp_bfr, str, STR_LEN, 0, 6);
-
-        fractional = modf(gps_value.lng, &integral)*10000;
-  sprintf(str, " %3s    long%4d.%04d", (gps_value.ok ? "Ok " : "Err"), (int16_t)integral, (int16_t)(fractional));
-  disp_draw_str_simple(disp_bfr, str, STR_LEN, 0, 7);  
+  sprintf(str, "%04d-%02d-%02d %02d:%02d:%02d", 
+    clock_value.tm_year, clock_value.tm_mon, clock_value.tm_mday,
+    clock_value.tm_hour , clock_value.tm_min, clock_value.tm_sec);
+  disp_draw_str_simple(disp_bfr, str, STR_LEN, 0, 7);
 }
 /* USER CODE END 0 */
 
@@ -179,7 +169,6 @@ int main(void)
   MX_GPIO_Init();
   MX_SPI1_Init();
   MX_TIM1_Init();
-  MX_I2C1_Init();
   MX_I2C2_Init();
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
@@ -200,8 +189,8 @@ int main(void)
   static mag_drv_t mag_drv;
   mag_HMC5883L_default(&mag_drv);
 
-  mag_drv.write_i2c_cb = i2c_1_write_cb;
-  mag_drv.read_i2c_cb = i2c_1_read_cb;   
+  mag_drv.write_i2c_cb = i2c_2_write_cb;
+  mag_drv.read_i2c_cb = i2c_2_read_cb;   
   mag_drv.delay_ms_cb = HAL_Delay;
 
   mag_HMC5883L_init(&mag_drv);
@@ -220,8 +209,8 @@ int main(void)
   //clock
   static clock_drv_t clock_drv = {
     .addr = 0x68,
-    .read_i2c_cb = i2c_1_read_cb,
-    .write_i2c_cb = i2c_1_write_cb
+    .read_i2c_cb = i2c_2_read_cb,
+    .write_i2c_cb = i2c_2_write_cb
   };
   clock_DS3231_init(&clock_drv);
 
@@ -230,7 +219,7 @@ int main(void)
   clock_value.tm_sec = 45;
 
   clock_value.tm_wday = 6;
-  clock_value.tm_mday = 19;
+  clock_value.tm_mday = 23;
   clock_value.tm_mon = 02;
   clock_value.tm_year = 2022;
 
@@ -247,9 +236,6 @@ int main(void)
     acc_ADXL345_getXYZ(&acc);    
     
     clock_DS3231_getTime(&clock_value);
-    acc.x = clock_value.tm_year;
-    acc.y = clock_value.tm_mon;
-    acc.z = clock_value.tm_mday;
 
     update_disp_bfr(disp_bfr);
     display_gmg12864_print();

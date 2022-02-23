@@ -41,7 +41,16 @@ void clock_DS3231_init(clock_drv_t * clock_drv)
   uint8_t bfr[2] = {0x0E, 0x24};
   clock_i2c_write(bfr, sizeof(bfr));
 }
-  
+
+uint8_t clock_DS3231_getTemperature(void)
+{
+  uint8_t bfr[2];
+  bfr[0] = REG_TEMP; 
+  clock_i2c_write(bfr, 1);
+  clock_i2c_read(bfr, 1);  //read regs  
+  return bfr[0];
+}
+
 void clock_DS3231_getTime(clock_value_t * current_time)
 {  
   uint8_t bfr[7] = {0};
@@ -56,14 +65,8 @@ void clock_DS3231_getTime(clock_value_t * current_time)
   current_time->tm_mday = bcd2int(bfr[4]);
   current_time->tm_mon  = bcd2int(bfr[5] & 0x1F);
   current_time->tm_year = 2000 + bcd2int(bfr[6]);
-}
-uint8_t clock_DS3231_getTemperature(void)
-{
-  uint8_t bfr[2];
-  bfr[0] = REG_TEMP; 
-  clock_i2c_write(bfr, 1);
-  clock_i2c_read(bfr, 1);  //read regs  
-  return bfr[0];
+
+  current_time->temperature = clock_DS3231_getTemperature();
 }
 
 void clock_DS3231_setTime(clock_value_t * new_time)

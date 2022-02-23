@@ -15,19 +15,7 @@
 #define MODE_MULTI 0x40
 
 static acc_drv_t * p_acc_drv;
-/*
-static void acc_i2c_write(uint8_t bfr[], uint16_t length)
-{
-  if (p_acc_drv->write_i2c_cb)
-    p_acc_drv->write_i2c_cb(p_acc_drv->addr, bfr, length);
-}
 
-static void acc_i2c_read(uint8_t bfr[], uint16_t length)
-{
-  if (p_acc_drv->read_i2c_cb)
-    p_acc_drv->read_i2c_cb(p_acc_drv->addr, bfr, length);
-}
-*/
 static void acc_spi_write_reg(uint8_t addr, uint8_t value)
 {
   uint8_t bfr[] = {addr, value};
@@ -48,11 +36,6 @@ static void acc_spi_write_read(uint8_t addr, uint8_t * bfr_rx, uint16_t length)
 {
   if (p_acc_drv->spi_write_read_cb)
     p_acc_drv->spi_write_read_cb(bfr_rx, bfr_rx, length);
-}
-static void acc_delay_ms(uint32_t milliseconds)
-{
-  if (p_acc_drv->delay_ms_cb)
-    p_acc_drv->delay_ms_cb(milliseconds);
 }
 
 void acc_ADXL345_init(acc_drv_t * acc_drv)

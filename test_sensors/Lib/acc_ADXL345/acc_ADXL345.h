@@ -41,8 +41,6 @@ typedef enum {
 } acc_ADXL345_gain_t;
 
 typedef struct {
-  //void (*write_i2c_cb)(uint8_t addr, uint8_t bfr[], uint16_t length);
-  //void (*read_i2c_cb)(uint8_t addr, uint8_t bfr[], uint16_t length);
   void (*spi_write_cb)(uint8_t bfr[], uint16_t length);
   void (*spi_write_read_cb)(uint8_t * bfr_tx, uint8_t * bfr_rx, uint16_t length);
   void (*delay_ms_cb)(uint32_t milliseconds);

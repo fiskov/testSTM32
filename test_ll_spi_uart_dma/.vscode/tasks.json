@@ -1,0 +1,26 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build",
+            "type": "shell",
+            "group": "build",
+            "command": "c:\\Qt\\Tools\\mingw810_64\\bin\\mingw32-make",
+            "problemMatcher": []
+        },
+        {
+            "label": "Clean",
+            "type": "shell",
+            "group": "build",
+            "command": "c:\\Qt\\Tools\\mingw810_64\\bin\\mingw32-make clean",
+            "problemMatcher": []
+        },
+        {
+            "label": "Write_firmware",
+            "type": "shell",
+            "group": "build",
+            "command": "c:\\Qt\\Tools\\mingw810_64\\bin\\mingw32-make prog",
+            "problemMatcher": []
+        }
+    ]
+}

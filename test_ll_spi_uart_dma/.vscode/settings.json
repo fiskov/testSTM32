@@ -1,0 +1,7 @@
+{
+  "cortex-debug.gdbPath": "c:\\Program Files (x86)\\GNU Arm Embedded Toolchain\\10 2021.10\\bin\\arm-none-eabi-gdb.exe",
+  "cortex-debug.variableUseNaturalFormat": false,
+  "C_Cpp.default.defines": [
+    "STM32F103xB"
+  ]
+}

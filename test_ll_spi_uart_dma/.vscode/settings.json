@@ -3,5 +3,6 @@
   "cortex-debug.variableUseNaturalFormat": false,
   "C_Cpp.default.defines": [
     "STM32F103xB"
-  ]
+  ],
+  "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools"
 }

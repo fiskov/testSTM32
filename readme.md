@@ -24,3 +24,8 @@ stm32f103 + display GMG12864 06D v2.2
 ## test_ll_spi_uart_dma
 
 - MCU stm32f103rb
+
+## test_pwm_10_MHz
+
+- MCU stm32f103c8t6
+- (out) - MCU stm33f429

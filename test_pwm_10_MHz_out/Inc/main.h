@@ -36,6 +36,7 @@ extern "C" {
 #include "stm32f4xx_ll_pwr.h"
 #include "stm32f4xx_ll_dma.h"
 #include "stm32f4xx_ll_spi.h"
+#include "stm32f4xx_ll_tim.h"
 #include "stm32f4xx_ll_gpio.h"
 
 #if defined(USE_FULL_ASSERT)
@@ -70,8 +71,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define DBG_Pin LL_GPIO_PIN_4
-#define DBG_GPIO_Port GPIOA
+#define DBG_Pin LL_GPIO_PIN_1
+#define DBG_GPIO_Port GPIOC
 #define DBG_IN_Pin LL_GPIO_PIN_6
 #define DBG_IN_GPIO_Port GPIOA
 #define LED_RED_Pin LL_GPIO_PIN_5

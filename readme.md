@@ -28,4 +28,4 @@ stm32f103 + display GMG12864 06D v2.2
 ## test_pwm_10_MHz
 
 - MCU stm32f103c8t6
-- (out) - MCU stm33f429
+- (out) - MCU stm33f429 (stm32f4-discovery) PF6-CLKTIM, PF7-CLKSPI, PF9-MOSI, PC0-packet

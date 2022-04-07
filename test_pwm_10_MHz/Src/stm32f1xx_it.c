@@ -22,6 +22,7 @@
 #include "stm32f1xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "common.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,7 +32,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-extern TIM_HandleTypeDef htim1;
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -55,7 +56,7 @@ extern TIM_HandleTypeDef htim1;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-extern DMA_HandleTypeDef hdma_tim1_up;
+
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -185,7 +186,7 @@ void SysTick_Handler(void)
   /* USER CODE BEGIN SysTick_IRQn 0 */
 
   /* USER CODE END SysTick_IRQn 0 */
-  HAL_IncTick();
+
   /* USER CODE BEGIN SysTick_IRQn 1 */
 
   /* USER CODE END SysTick_IRQn 1 */
@@ -199,20 +200,91 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief This function handles DMA1 channel5 global interrupt.
+  * @brief This function handles TIM3 global interrupt.
   */
-void DMA1_Channel5_IRQHandler(void)
+void TIM3_IRQHandler(void)
 {
-  /* USER CODE BEGIN DMA1_Channel5_IRQn 0 */
+  /* USER CODE BEGIN TIM3_IRQn 0 */
+  //LL_GPIO_SetOutputPin(DBG_GPIO_Port, DBG_Pin);
 
-  /* USER CODE END DMA1_Channel5_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_tim1_up);
-  /* USER CODE BEGIN DMA1_Channel5_IRQn 1 */
-  extern void dma_interrupt(void);
-  dma_interrupt();
-  /* USER CODE END DMA1_Channel5_IRQn 1 */
+  LL_TIM_ClearFlag_UPDATE(TIM3);
+  LL_TIM_DisableCounter(TIM3);
+  
+  
+  //LL_GPIO_ResetOutputPin(DBG_GPIO_Port, DBG_Pin);
+  
+  //swtich mode to GPIO-input
+  LL_SPI_Disable(SPI1);
+
+  // wait next address
+  _EXTI_SDA_ONLY();
+  
+  //LL_GPIO_SetOutputPin(DBG_GPIO_Port, DBG_Pin);
+  
+  /* USER CODE END TIM3_IRQn 0 */
+  /* USER CODE BEGIN TIM3_IRQn 1 */
+
+  /* USER CODE END TIM3_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM4 global interrupt.
+  */
+void TIM4_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM4_IRQn 0 */
+  LL_TIM_ClearFlag_UPDATE(TIM4);
+  data.flags.timer1s = 1;
+  /* USER CODE END TIM4_IRQn 0 */
+  /* USER CODE BEGIN TIM4_IRQn 1 */
+
+  /* USER CODE END TIM4_IRQn 1 */
+}
+
+/**
+  * @brief This function handles SPI1 global interrupt.
+  */
+void SPI1_IRQHandler(void)
+{
+  /* USER CODE BEGIN SPI1_IRQn 0 */
+
+  /* USER CODE END SPI1_IRQn 0 */
+  /* USER CODE BEGIN SPI1_IRQn 1 */
+  LL_GPIO_SetOutputPin(DBG_GPIO_Port, DBG_Pin);
+  
+  //check addr
+  if ( LL_SPI_ReceiveData16(SPI1) == data.addr0) 
+  {
+    // here the line SDA should swith to ACK 
+    LL_GPIO_ResetOutputPin(DBG_GPIO_Port, DBG_Pin);
+    __NOP();__NOP();__NOP();__NOP();__NOP();
+    LL_GPIO_SetOutputPin(DBG_GPIO_Port, DBG_Pin);
+    // and switch
+  }
+
+  LL_GPIO_ResetOutputPin(DBG_GPIO_Port, DBG_Pin);
+  /* USER CODE END SPI1_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */
+
+// SDA PA5
+void __attribute__( ( section(".data") ) ) EXTI9_5_IRQHandler(void)
+{
+  (void)SPI1->DR;
+  LL_SPI_Enable(SPI1);
+  
+  //disable interrupt SDA
+  _EXTI_NONE();
+  
+  LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_5);
+
+  //start timeout timer
+  LL_TIM_ClearFlag_UPDATE(TIM3);
+  LL_TIM_EnableCounter(TIM3); 
+
+  LL_GPIO_ResetOutputPin(DBG_GPIO_Port, DBG_Pin);
+}
+
 
 /* USER CODE END 1 */

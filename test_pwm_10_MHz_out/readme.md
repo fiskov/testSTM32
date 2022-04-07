@@ -1,0 +1,11 @@
+
+- gpio sda low. wait 200ns
+- gpio scl low. wait
+- pins = gpio -> spi+tmr
+- spi send 16bit
+- tmr_pwm start (with preload)
+- wait (16 pulses) wait 1800+ ns
+- pins = spi+tmr -> gpio. wait 300 ns
+- gpio scl high. gpio scl low. wait 200ns
+- gpio scl high. wait 100ns
+- gpio sda high.

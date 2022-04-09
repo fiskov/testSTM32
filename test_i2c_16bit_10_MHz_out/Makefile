@@ -31,6 +31,8 @@ OPT = -Og
 # Build path
 BUILD_DIR = build
 
+GCC_PATH = c:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\bin
+
 ######################################
 # source
 ######################################
@@ -145,7 +147,8 @@ LIBDIR =
 LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections
 
 # default action: build all
-all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
+all: $(BUILD_DIR)/$(TARGET).elf
+# $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
 
 
 #######################################
@@ -181,8 +184,11 @@ $(BUILD_DIR):
 # clean up
 #######################################
 clean:
-	-rm -fR $(BUILD_DIR)
-  
+	-del /f /q $(BUILD_DIR)
+
+prog: $(BUILD_DIR)/$(TARGET).elf
+	openocd -f interface/stlink-v2.cfg -f target/stm32f1x.cfg -c "program build/$(TARGET).elf verify exit reset"
+
 #######################################
 # dependencies
 #######################################

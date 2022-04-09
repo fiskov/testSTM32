@@ -269,7 +269,8 @@ void SPI1_IRQHandler(void)
 /* USER CODE BEGIN 1 */
 
 // SDA PA5
-void __attribute__( ( section(".data") ) ) EXTI9_5_IRQHandler(void)
+//void __attribute__( ( section(".data") ) ) EXTI9_5_IRQHandler(void)
+void EXTI9_5_IRQHandler(void)
 {
   (void)SPI1->DR;
   LL_SPI_Enable(SPI1);

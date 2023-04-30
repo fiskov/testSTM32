@@ -8,6 +8,11 @@ stm32f411ce software pwm
 stm32f103 + display GMG12864 06D v2.2
 
 
+## test_gmg12864_lvgl (CubeMX LL) + gmg12864_06D_v2.2(SPI) + LVGL 
+
+- MCU stm32f103c8t6
+- Display GMG12864_06D_v2.2
+
 ## stm32f103 + sensors (HAL)
 
 - MCU stm32f103c8t6
@@ -29,3 +34,8 @@ stm32f103 + display GMG12864 06D v2.2
 
 - MCU stm32f103c8t6
 - (out) - MCU stm33f429 (stm32f4-discovery) PF6-CLKTIM, PF7-CLKSPI, PF9-MOSI, PC0-packet
+
+## test_man_dma
+
+- MCU stm32f103c6t6 (Proteus)
+

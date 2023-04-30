@@ -1,7 +1,8 @@
 #include "stdint.h"
 #include "ascii_chars.h"
 
-static unsigned char font5x7[] = {
+#define FONT_WIDTH FONT_7x5_WIDTH
+static unsigned char font_array[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00,  // 0x00 (nul)
 	0x3E, 0x5B, 0x4F, 0x5B, 0x3E,  // 0x01 (soh)
 	0x3E, 0x6B, 0x4F, 0x6B, 0x3E,  // 0x02 (stx)
@@ -262,13 +263,13 @@ static unsigned char font5x7[] = {
 
 uint8_t * symbol_to_bfr(uint8_t bfr[], char ch, uint8_t invert_color)
 {
-	uint16_t pos_start = ch * 5;
-	for (int i = 0; i<5; i++)
+	uint16_t pos_start = ch * (FONT_WIDTH-1);
+	for (int i = 0; i<FONT_WIDTH-1; i++)
 	{
-		uint8_t b = font5x7[pos_start+i];
+		uint8_t b = font_array[pos_start+i];
 		bfr[i] = invert_color ? ~b : b;	//inverse color if necessary
 	}
-	bfr[5] = invert_color ? ~0 : 0; //inverse color if necessary
-	return &bfr[6];
+	bfr[FONT_WIDTH-1] = invert_color ? ~0 : 0; //inverse color if necessary
+	return &bfr[FONT_WIDTH];
 }
 

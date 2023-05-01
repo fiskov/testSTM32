@@ -223,7 +223,6 @@ int main(void)
   uint32_t tmr_led=0, tmr_lvgl=0, tmr_1s=0;
   short tmr_max=0, tmr_maxt=0;
   short pos_x=0, dx=3;
-  static char s[64];
 
   lv_obj_t *label, *img1, *gif1;
   label = lv_label_create(lv_scr_act());
@@ -251,9 +250,7 @@ int main(void)
       LL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 
       // update label-text
-      sprintf(s, "max=%dus", tmr_max);
-
-      lv_label_set_text(label, s);
+      lv_label_set_text_fmt(label, "max=%dus", tmr_max);
       
       // move box
       pos_x += dx;

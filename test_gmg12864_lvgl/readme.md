@@ -15,8 +15,9 @@ Hardware:
 Use Label, Image and GIF (letter 'G' on the left side)
 
 ## Memory consumption (used LL):
+```
    text    data     bss     dec     hex filename
   58432     172    5516   64120    fa78 build/test_gmg12864.elf
-
+```
 
 ![img](images/result.gif)
